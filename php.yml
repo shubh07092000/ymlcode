@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web1
+  labels:
+    code: php
+spec:
+  ports:
+    - nodePort: 31000
+      port: 80
+      targetPort: 80
+  selector:
+    code: php
+    tier: frontend
+  type: NodePort
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pv-claim1
+  labels:
+    code: php
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: web1
+  labels:
+    code: php
+spec:
+  selector:
+    matchLabels:
+      code: php
+      tier: frontend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        code: php
+        tier: frontend
+    spec:
+      containers:
+      - image: shubh709/php:v1
+        name: web1
+        
+        ports:
+        - containerPort: 80
+          name: web1
+        volumeMounts:
+        - name: persistent-storage
+          mountPath: /var/www/html
+      volumes:
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName: pv-claim1
